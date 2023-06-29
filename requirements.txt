@@ -1,0 +1,9 @@
+# Common
+requests
+python-dotenv
+
+# Discord
+discord
+
+# Synology NAS
+synology-api
