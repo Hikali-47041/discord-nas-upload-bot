@@ -9,9 +9,9 @@ import requests
 from pathlib import Path
 from dotenv import load_dotenv
 
-repo = "https://github.com/Hikali-47041/Discord-Hi"
+repo = "https://github.com/Hikali-47041/discord-nas-upload"
 workdir = Path("/tmp/discord-nas-upload")
-nas_upload_dir = Path("/home/hikalab-test/")
+nas_upload_dir = Path("/home/discord-nas-upload/")
 copy_suffix = "copy"
 global current_channel
 current_channel = None
