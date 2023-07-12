@@ -2,7 +2,7 @@
 Discordのチャンネルに投稿されたAttachmentsをNASにアップロードするボット(開発中)
 
 ## install
-1. install [python3](https://www.python.org/)
+1. install [python3](https://www.python.org/) and `python3-pip`
 2. clone this repository && cd to repository directory
 3. (Optional)(Recommended) setup venv  
 `python -m venv venv`  
