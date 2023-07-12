@@ -41,21 +41,17 @@ def url_to_path(url):
     return filepath
 
 def download_file(url, file_name):
-    response = None
     try:
         r = requests.get(url, stream=True)
-    except MissingSchema:
-        response = f"MissingSchema: {url}"
-    except NameResolutionError:
-        response = f"NameResolutionError: {url}"
+    except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError) as err:
+        return f"{err}: {url}"
     else:
         if r.status_code == 200:
             with open(file_name, 'wb') as f:
                 f.write(r.content)
+            return
         else:
-            response = f"HTTP status code {r.status_code}"
-    finally:
-        return response
+            return f"HTTP status code {r.status_code}"
 
 def file_nas_upload(srcpath, distpath):
     command = ["./venv/bin/python", "syno_nas_upload.py", srcpath, distpath]
