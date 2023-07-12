@@ -35,16 +35,27 @@ def url_to_path(url):
     dirpath = workdir.joinpath(f"{datetime.date.today()}")
     dirpath.mkdir(exist_ok=True)
     filepath = dirpath.joinpath(re.search("[^/]+$", url).group())
-        # rename filename if exists
+    # rename filename if exists
     if filepath.exists():
         filepath = dirpath.joinpath(f"{filepath.stem}_{copy_suffix}{filepath.suffix}")
     return filepath
 
 def download_file(url, file_name):
-    r = requests.get(url, stream=True)
-    if r.status_code == 200:
-        with open(file_name, 'wb') as f:
-            f.write(r.content)
+    response = None
+    try:
+        r = requests.get(url, stream=True)
+    except MissingSchema:
+        response = f"MissingSchema: {url}"
+    except NameResolutionError:
+        response = f"NameResolutionError: {url}"
+    else:
+        if r.status_code == 200:
+            with open(file_name, 'wb') as f:
+                f.write(r.content)
+        else:
+            response = f"HTTP status code {r.status_code}"
+    finally:
+        return response
 
 def file_nas_upload(srcpath, distpath):
     command = ["./venv/bin/python", "syno_nas_upload.py", srcpath, distpath]
@@ -77,7 +88,7 @@ def discord_bot_main():
     @discord.app_commands.guild_only()
     async def show_help(ctx: discord.Interaction, command: str = ""):
         help_message = discord.Embed()
-        print(command)
+        # print(command)
         if command == "":
             await ctx.response.send_message(f"研究室のNASにファイルをアップロードするBot", ephemeral=True)
         elif command == "upload_url":
@@ -179,10 +190,13 @@ def discord_bot_main():
 
         if message.attachments:
             for attachment in message.attachments:
-                print(attachment.url)
                 filepath = url_to_path(attachment.url)
-                download_file(attachment.url, filepath)
-                file_nas_upload(filepath, nas_upload_dir.joinpath(filepath.parent.relative_to(workdir)))
+                download_file_result = download_file(attachment.url, filepath)
+                if download_file_result is not None:
+                    await message.add_reaction("❎")
+                    return
+                else:
+                    file_nas_upload(filepath, nas_upload_dir.joinpath(filepath.parent.relative_to(workdir)))
             clean_directory(filepath.parent)
             await message.add_reaction("⬆")
             # await ctx.response.send_message(f"uploaded: {file}")
@@ -200,11 +214,14 @@ def discord_bot_main():
         await client.change_presence(status=discord.Status.online, activity=discord.Game("uploading"))
         await ctx.response.defer(ephemeral=False, thinking=True)
         filepath = url_to_path(url)
-        download_file(url, filepath)
-        file_nas_upload(filepath, nas_upload_dir.joinpath(filepath.parent.relative_to(workdir)))
-        response_message = f"uploaded: {url}"
+        download_file_result = download_file(url, filepath)
+        if download_file_result is not None:
+            response_message = download_file_result
+        else:
+            file_nas_upload(filepath, nas_upload_dir.joinpath(filepath.parent.relative_to(workdir)))
+            response_message = f"uploaded: {url}"
+            clean_directory(filepath.parent)
         await ctx.followup.send(response_message)
-        clean_directory(filepath.parent)
         await client.change_presence(status=discord.Status.idle, activity=discord.Game(""))
 
     @tree.command(
@@ -219,11 +236,14 @@ def discord_bot_main():
         await client.change_presence(status=discord.Status.online, activity=discord.Game("uploading"))
         await ctx.response.defer(ephemeral=False, thinking=True)
         filepath = url_to_path(file.url)
-        download_file(file.url, filepath)
-        file_nas_upload(filepath, nas_upload_dir.joinpath(filepath.parent.relative_to(workdir)))
-        response_message = f"uploaded: {file}"
+        download_file_result = download_file(file.url, filepath)
+        if download_file_result is not None:
+            response_message = download_file_result
+        else:
+            file_nas_upload(filepath, nas_upload_dir.joinpath(filepath.parent.relative_to(workdir)))
+            response_message = f"uploaded: {file}"
+            clean_directory(filepath.parent)
         await ctx.followup.send(response_message)
-        clean_directory(filepath.parent)
         await client.change_presence(status=discord.Status.idle, activity=discord.Game(""))
 
     @client.event
