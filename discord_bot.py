@@ -198,10 +198,12 @@ def discord_bot_main():
     @discord.app_commands.guild_only()
     async def upload_url(ctx: discord.Interaction, url: str):
         await client.change_presence(status=discord.Status.online, activity=discord.Game("uploading"))
+        await ctx.response.defer(ephemeral=False, thinking=True)
         filepath = url_to_path(url)
         download_file(url, filepath)
         file_nas_upload(filepath, nas_upload_dir.joinpath(filepath.parent.relative_to(workdir)))
-        await ctx.response.send_message(f"uploaded: {url}")
+        response_message = f"uploaded: {url}"
+        await ctx.followup.send(response_message)
         clean_directory(filepath.parent)
         await client.change_presence(status=discord.Status.idle, activity=discord.Game(""))
 
@@ -215,10 +217,12 @@ def discord_bot_main():
     @discord.app_commands.guild_only()
     async def upload_attachment(ctx: discord.Interaction, file: discord.Attachment):
         await client.change_presence(status=discord.Status.online, activity=discord.Game("uploading"))
+        await ctx.response.defer(ephemeral=False, thinking=True)
         filepath = url_to_path(file.url)
         download_file(file.url, filepath)
         file_nas_upload(filepath, nas_upload_dir.joinpath(filepath.parent.relative_to(workdir)))
-        await ctx.response.send_message(f"uploaded: {file}")
+        response_message = f"uploaded: {file}"
+        await ctx.followup.send(response_message)
         clean_directory(filepath.parent)
         await client.change_presence(status=discord.Status.idle, activity=discord.Game(""))
 
