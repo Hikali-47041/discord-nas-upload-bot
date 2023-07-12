@@ -9,7 +9,7 @@ import requests
 from pathlib import Path
 from dotenv import load_dotenv
 
-repo = "https://github.com/Hikali-47041/discord-nas-upload"
+repo = "https://github.com/Hikali-47041/discord-nas-upload-bot"
 workdir = Path("/tmp/discord-nas-upload")
 nas_upload_dir = Path("/home/discord-nas-upload/")
 copy_suffix = "copy"
@@ -90,7 +90,7 @@ def discord_bot_main():
         help_message = discord.Embed()
         # print(command)
         if command == "":
-            await ctx.response.send_message(f"研究室のNASにファイルをアップロードするBot", ephemeral=True)
+            await ctx.response.send_message(f"研究室のNASにファイルをアップロードするBot \nrepo: {repo}", ephemeral=True)
         elif command == "upload_url":
             await ctx.response.send_message(f"url のデータをダウンロードしてアップロードします", ephemeral=True)
         elif command == "upload_attachment":
