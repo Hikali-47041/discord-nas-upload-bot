@@ -1,4 +1,5 @@
 # Common
+wheel
 requests
 python-dotenv
 
