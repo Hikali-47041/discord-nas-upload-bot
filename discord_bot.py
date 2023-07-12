@@ -47,7 +47,7 @@ def download_file(url, file_name):
             f.write(r.content)
 
 def file_nas_upload(srcpath, distpath):
-    command = ["python", "syno_nas_upload.py", srcpath, distpath]
+    command = ["./venv/bin/python", "syno_nas_upload.py", srcpath, distpath]
     proc = subprocess.Popen(command)
     return proc.communicate()
 
