@@ -1,0 +1,32 @@
+[Unit]
+Description=Discord NAS Upload Bot
+After=network.target
+
+
+[Service]
+KillMode=process
+Restart=always
+Type=simple
+
+; Name of the user that runs the Uploader service.
+; User=
+
+; Environment="WORKDIR=/opt/discord-nas-upload-bot/"
+WorkingDirectory=/opt/discord-nas-upload-bot
+ExecStart=/opt/discord-nas-upload-bot/venv/bin/python /opt/discord-nas-upload-bot/discord_bot.py
+
+; Some security directives.
+; Use private /tmp and /var/tmp folders inside a new file system namespace, which are discarded after the process stops.
+PrivateTmp=true
+; Mount /usr, /boot, and /etc as read-only for processes invoked by this service.
+ProtectSystem=full
+; The /home, /root, and /run/user folders can not be accessed by this service anymore. If your user has its home folder in one of the restricted places, or use one of these folders as its working directory, you have to set this to false.
+ProtectHome=true
+; Sets up a new /dev mount for the process and only adds API pseudo devices like /dev/null, /dev/zero or /dev/random but not physical devices. Disabled by default because it may not work on devices like the Raspberry Pi.
+; PrivateDevices=false
+; Ensures that the service process and all its children can never gain new privileges through execve().
+NoNewPrivileges=true
+
+
+[Install]
+WantedBy=multi-user.target
