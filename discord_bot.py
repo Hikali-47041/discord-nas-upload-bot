@@ -1,13 +1,12 @@
 import os
 import re
-# import sys
 import datetime
 import shutil
 import subprocess
-import discord
-import requests
 from pathlib import Path
 from dotenv import load_dotenv
+import discord
+import requests
 
 repo = "https://github.com/Hikali-47041/discord-nas-upload-bot"
 workdir = Path("/tmp/discord-nas-upload")
@@ -24,14 +23,17 @@ client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
 
 def get_current_channel():
+    """ get current_channel variables """
     global current_channel
     return current_channel
 
 def set_current_channel(channel):
+    """ set current_channel variables """
     global current_channel
     current_channel = channel
 
 def url_to_path(url):
+    """ Convert URL to file path """
     dirpath = workdir.joinpath(f"{datetime.date.today()}")
     dirpath.mkdir(exist_ok=True)
     filepath = dirpath.joinpath(re.search("[^/]+$", url).group())
@@ -41,27 +43,29 @@ def url_to_path(url):
     return filepath
 
 def download_file(url, file_name):
+    """ Download URL file using request """
     try:
-        r = requests.get(url, stream=True)
+        requests_result = requests.get(url, stream=True, timeout=5)
     except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError) as err:
         return f"{err}: {url}"
-    else:
-        if r.status_code == 200:
-            with open(file_name, 'wb') as f:
-                f.write(r.content)
-            return
-        else:
-            return f"HTTP status code {r.status_code}"
+    if requests_result.status_code == 200:
+        with open(file_name, 'wb') as file:
+            file.write(requests_result.content)
+        return None
+    return f"HTTP status code {requests_result.status_code}"
 
 def file_nas_upload(srcpath, distpath):
+    """ un a program that uploads files as a sub-process """
     command = ["./venv/bin/python", "syno_nas_upload.py", srcpath, distpath]
     proc = subprocess.Popen(command)
     return proc.communicate()
 
 def clean_directory(path):
+    """ Delete directories recursively using shutil """
     shutil.rmtree(path)
 
 def discord_bot_main():
+    """ Main Processing Discord bots """
 
     @tree.command(
         name="help",
@@ -83,16 +87,16 @@ def discord_bot_main():
     )
     @discord.app_commands.guild_only()
     async def show_help(ctx: discord.Interaction, command: str = ""):
-        help_message = discord.Embed()
+        # help_message = discord.Embed()
         # print(command)
         if command == "":
             await ctx.response.send_message(f"研究室のNASにファイルをアップロードするBot \nrepo: {repo}", ephemeral=True)
         elif command == "upload_url":
-            await ctx.response.send_message(f"url のデータをダウンロードしてアップロードします", ephemeral=True)
+            await ctx.response.send_message("url のデータをダウンロードしてアップロードします", ephemeral=True)
         elif command == "upload_attachment":
-            await ctx.response.send_message(f"DiscordのAttachmentsで添付したデータをアップロードします", ephemeral=True)
+            await ctx.response.send_message("DiscordのAttachmentsで添付したデータをアップロードします", ephemeral=True)
         elif command == "auto_upload":
-            await ctx.response.send_message(f"指定したチャンネル(デフォオルト: コマンドを使用したチャンネル)にアップロードされたAttachmentsに対して自動でファイルをアップロードします", ephemeral=True)
+            await ctx.response.send_message("指定したチャンネル(デフォオルト: コマンドを使用したチャンネル)にアップロードされたAttachmentsに対して自動でファイルをアップロードします", ephemeral=True)
         # elif command == "config"
         #     await ctx.response.send_message(f"開発中", ephemeral=True)
 
@@ -138,7 +142,6 @@ def discord_bot_main():
     @discord.app_commands.describe(
         command="enable/disable auto upload",
         channel="read channel(default current channel)",
-        
     )
     @discord.app_commands.rename(
         command="command",
@@ -155,28 +158,27 @@ def discord_bot_main():
     async def auto_upload(ctx: discord.Interaction, command: str, channel: discord.TextChannel = None):
         if command == "status":
             if get_current_channel() is None:
-                await ctx.response.send_message(f"auto upload is disabled", ephemeral=True)
+                await ctx.response.send_message("auto upload is disabled", ephemeral=True)
             else:
                 await ctx.response.send_message(f"auto upload is enabled at {get_current_channel()}", ephemeral=True)
-            return
         elif command == "enable":
             if get_current_channel() is not None:
-                await client.get_channel(get_current_channel().id).send(f"disabled auto upload.")
+                await client.get_channel(get_current_channel().id).send("disabled auto upload.")
             if channel is None:
                 channel = ctx.channel
             await ctx.response.send_message(f"enable auto upload at {channel}", ephemeral=True)
             view = discord.ui.View()
             # delete_button = DeleteButton(label='Delete', style=discord.ButtonStyle.red)
             # view.add_item(delete_button)
-            await client.get_channel(channel.id).send(f"enabled auto upload.", view=view)
+            await client.get_channel(channel.id).send("enabled auto upload.", view=view)
             # TODO 同期
             set_current_channel(channel)
         elif command == "disable":
             if get_current_channel() is None:
-                await ctx.response.send_message(f"already disabled auto upload", ephemeral=True)
+                await ctx.response.send_message("already disabled auto upload", ephemeral=True)
             else:
                 await ctx.response.send_message(f"disable auto upload at {get_current_channel()}", ephemeral=True)
-                await client.get_channel(get_current_channel().id).send(f"disabled auto upload.")
+                await client.get_channel(get_current_channel().id).send("disabled auto upload.")
             set_current_channel(None)
 
     @client.event
@@ -191,8 +193,7 @@ def discord_bot_main():
                 if download_file_result is not None:
                     await message.add_reaction("❎")
                     return
-                else:
-                    file_nas_upload(filepath, nas_upload_dir.joinpath(filepath.parent.relative_to(workdir)))
+                file_nas_upload(filepath, nas_upload_dir.joinpath(filepath.parent.relative_to(workdir)))
             clean_directory(filepath.parent)
             await message.add_reaction("⬆")
             # await ctx.response.send_message(f"uploaded: {file}")
