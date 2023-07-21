@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import discord
 import requests
 
-repo = "https://github.com/Hikali-47041/discord-nas-upload-bot"
+REPO = "https://github.com/Hikali-47041/discord-nas-upload-bot"
 workdir = Path("/tmp/discord-nas-upload")
 nas_upload_dir = Path("/home/discord-nas-upload/")
 copy_suffix = "copy"
@@ -90,7 +90,7 @@ def discord_bot_main():
         # help_message = discord.Embed()
         # print(command)
         if command == "":
-            await ctx.response.send_message(f"研究室のNASにファイルをアップロードするBot \nrepo: {repo}", ephemeral=True)
+            await ctx.response.send_message(f"研究室のNASにファイルをアップロードするBot \nrepo: {REPO}", ephemeral=True)
         elif command == "upload_url":
             await ctx.response.send_message("url のデータをダウンロードしてアップロードします", ephemeral=True)
         elif command == "upload_attachment":
@@ -183,7 +183,7 @@ def discord_bot_main():
 
     @client.event
     async def on_message(message):
-        if message.author.bot or get_current_channel() is None:
+        if message.author.bot or get_current_channel() is None or message.channel != get_current_channel():
             return
 
         if message.attachments:
