@@ -186,6 +186,7 @@ def discord_bot_main():
             return
 
         if message.attachments:
+            await client.change_presence(status=discord.Status.online, activity=discord.Game("uploading"))
             for attachment in message.attachments:
                 filepath = url_to_path(attachment.url, workdir.joinpath(f"{message.channel.name}", f"{datetime.date.today()}"))
                 download_file_result = download_file(attachment.url, filepath)
@@ -195,6 +196,7 @@ def discord_bot_main():
                 file_nas_upload(filepath, nas_upload_dir.joinpath(filepath.parent.relative_to(workdir)))
             clean_directory(filepath.parent)
             await message.add_reaction("⬆")
+            await client.change_presence(status=discord.Status.idle, activity=discord.Game(""))
             # await ctx.response.send_message(f"uploaded: {file}")
 
 
