@@ -32,10 +32,9 @@ def set_current_channel(channel):
     global current_channel
     current_channel = channel
 
-def url_to_path(url):
+def url_to_path(url, dirpath):
     """ Convert URL to file path """
-    dirpath = workdir.joinpath(f"{datetime.date.today()}")
-    dirpath.mkdir(exist_ok=True)
+    dirpath.mkdir(exist_ok=True, parents=True)
     filepath = dirpath.joinpath(re.search("[^/]+$", url).group())
     # rename filename if exists
     if filepath.exists():
@@ -188,7 +187,7 @@ def discord_bot_main():
 
         if message.attachments:
             for attachment in message.attachments:
-                filepath = url_to_path(attachment.url)
+                filepath = url_to_path(attachment.url, workdir.joinpath(f"{message.channel.name}", f"{datetime.date.today()}"))
                 download_file_result = download_file(attachment.url, filepath)
                 if download_file_result is not None:
                     await message.add_reaction("❎")
@@ -210,7 +209,7 @@ def discord_bot_main():
     async def upload_url(ctx: discord.Interaction, url: str):
         await client.change_presence(status=discord.Status.online, activity=discord.Game("uploading"))
         await ctx.response.defer(ephemeral=False, thinking=True)
-        filepath = url_to_path(url)
+        filepath = url_to_path(url, workdir.joinpath(f"{datetime.date.today()}"))
         download_file_result = download_file(url, filepath)
         if download_file_result is not None:
             response_message = download_file_result
@@ -232,7 +231,7 @@ def discord_bot_main():
     async def upload_attachment(ctx: discord.Interaction, file: discord.Attachment):
         await client.change_presence(status=discord.Status.online, activity=discord.Game("uploading"))
         await ctx.response.defer(ephemeral=False, thinking=True)
-        filepath = url_to_path(file.url)
+        filepath = url_to_path(file.url, workdir.joinpath(f"{datetime.date.today()}"))
         download_file_result = download_file(file.url, filepath)
         if download_file_result is not None:
             response_message = download_file_result
