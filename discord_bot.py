@@ -15,7 +15,6 @@ import requests
 
 REPO = "https://github.com/Hikali-47041/discord-nas-upload-bot"
 workdir = Path("/tmp/discord-nas-upload")
-nas_upload_dir = Path("/ando-lab-public/discord-nas-upload/")
 copy_suffix = "copy"
 
 auto_upload_config_path = Path("auto_upload_channels.json")
@@ -23,6 +22,7 @@ auto_upload_conf_json_key = "auto-upload-channels"
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_ACCESS_TOKEN')
+nas_upload_dir = Path(os.getenv('NAS_UPLOAD_ROOT'))
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
