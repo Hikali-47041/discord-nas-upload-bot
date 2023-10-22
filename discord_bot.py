@@ -1,6 +1,11 @@
+'''
+Main Function
+'''
+
 import os
 import re
 import datetime
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -10,10 +15,11 @@ import requests
 
 REPO = "https://github.com/Hikali-47041/discord-nas-upload-bot"
 workdir = Path("/tmp/discord-nas-upload")
-nas_upload_dir = Path("/home/discord-nas-upload/")
+nas_upload_dir = Path("/ando-lab-public/discord-nas-upload/")
 copy_suffix = "copy"
-global current_channel
-current_channel = None
+
+auto_upload_config_path = Path("auto_upload_channels.json")
+auto_upload_conf_json_key = "auto-upload-channels"
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_ACCESS_TOKEN')
@@ -22,15 +28,45 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
 
-def get_current_channel():
-    """ get current_channel variables """
-    global current_channel
-    return current_channel
+def get_current_channel(config_path, conf_json_key):
+    """ get auto_upload enabled channel lists """
+    channel_lists = []
+    try:
+        configfile = open(config_path, "r", encoding="utf-8")
+    except FileNotFoundError:
+        print("file not found")
+        config_path.touch()
+        set_current_channel("reset", None, [], config_path, conf_json_key)
+    else:
+        try:
+            config_dict = json.load(configfile)
+        except json.decoder.JSONDecodeError:
+            set_current_channel("reset", None, [], config_path, conf_json_key)
+        else:
+            channel_lists = config_dict.get(conf_json_key, [])
+        finally:
+            configfile.close()
+    return channel_lists
 
-def set_current_channel(channel):
-    """ set current_channel variables """
-    global current_channel
-    current_channel = channel
+def set_current_channel(mode, channel, channel_lists, config_path, conf_json_key):
+    """ set current_channel variables and call write function """
+    if mode == "reset":
+        print("current_channel json reseted")
+    elif mode == "append":
+        if channel not in channel_lists:
+            channel_lists.append(channel)
+    elif mode == "remove":
+        if channel in channel_lists:
+            channel_lists.remove(channel)
+    write_current_channel(config_path, conf_json_key, channel_lists)
+
+def write_current_channel(config_path, conf_json_key, channel_lists):
+    """ write current_channel variables in json files """
+    with open(config_path, "w", encoding="utf-8") as configfile:
+        auto_upload_conf_json = {
+            conf_json_key: channel_lists
+        }
+        json.dump(auto_upload_conf_json, configfile, indent=4)
 
 def url_to_path(url, dirpath):
     """ Convert URL to file path """
@@ -95,7 +131,7 @@ def discord_bot_main():
         elif command == "upload_attachment":
             await ctx.response.send_message("DiscordのAttachmentsで添付したデータをアップロードします", ephemeral=True)
         elif command == "auto_upload":
-            await ctx.response.send_message("指定したチャンネル(デフォオルト: コマンドを使用したチャンネル)にアップロードされたAttachmentsに対して自動でファイルをアップロードします", ephemeral=True)
+            await ctx.response.send_message("指定したチャンネル(デフォルト: コマンドを使用したチャンネル)にアップロードされたAttachmentsに対して自動でファイルをアップロードします", ephemeral=True)
         # elif command == "config"
         #     await ctx.response.send_message(f"開発中", ephemeral=True)
 
@@ -155,34 +191,42 @@ def discord_bot_main():
     )
     @discord.app_commands.guild_only()
     async def auto_upload(ctx: discord.Interaction, command: str, channel: discord.TextChannel = None):
+        if channel is None:
+            channel = ctx.channel
         if command == "status":
-            if get_current_channel() is None:
+            if get_current_channel(auto_upload_config_path, auto_upload_conf_json_key) == []:
                 await ctx.response.send_message("auto upload is disabled", ephemeral=True)
             else:
-                await ctx.response.send_message(f"auto upload is enabled at {get_current_channel()}", ephemeral=True)
+                await ctx.response.send_message(f"auto upload is enabled at {get_current_channel(auto_upload_config_path, auto_upload_conf_json_key)}", ephemeral=True)
         elif command == "enable":
-            if get_current_channel() is not None:
-                await client.get_channel(get_current_channel().id).send("disabled auto upload.")
-            if channel is None:
-                channel = ctx.channel
-            await ctx.response.send_message(f"enable auto upload at {channel}", ephemeral=True)
-            view = discord.ui.View()
-            # delete_button = DeleteButton(label='Delete', style=discord.ButtonStyle.red)
-            # view.add_item(delete_button)
-            await client.get_channel(channel.id).send("enabled auto upload.", view=view)
-            # TODO 同期
-            set_current_channel(channel)
-        elif command == "disable":
-            if get_current_channel() is None:
-                await ctx.response.send_message("already disabled auto upload", ephemeral=True)
+            if channel.id in get_current_channel(auto_upload_config_path, auto_upload_conf_json_key):
+                await ctx.response.send_message(f"Already enabled auto upload at {channel}", ephemeral=True)
             else:
-                await ctx.response.send_message(f"disable auto upload at {get_current_channel()}", ephemeral=True)
-                await client.get_channel(get_current_channel().id).send("disabled auto upload.")
-            set_current_channel(None)
+                await ctx.response.send_message(f"Enabled auto upload at {channel}", ephemeral=True)
+                view = discord.ui.View()
+                # delete_button = DeleteButton(label='Delete', style=discord.ButtonStyle.red)
+                # view.add_item(delete_button)
+                await client.get_channel(channel.id).send("Enabled auto upload.", view=view)
+                set_current_channel(
+                    "append", channel.id,
+                    get_current_channel(auto_upload_config_path, auto_upload_conf_json_key),
+                    auto_upload_config_path, auto_upload_conf_json_key
+                )
+        elif command == "disable":
+            if channel.id in get_current_channel(auto_upload_config_path, auto_upload_conf_json_key):
+                await ctx.response.send_message(f"Disabled auto upload at {channel}", ephemeral=True)
+                await client.get_channel(channel.id).send("Disabled auto upload.")
+                set_current_channel(
+                    "remove", channel.id,
+                    get_current_channel(auto_upload_config_path, auto_upload_conf_json_key),
+                    auto_upload_config_path, auto_upload_conf_json_key
+                )
+            else:
+                await ctx.response.send_message(f"Already disabled auto upload at {channel}", ephemeral=True)
 
     @client.event
     async def on_message(message):
-        if message.author.bot or get_current_channel() is None or message.channel != get_current_channel():
+        if message.author.bot or message.channel.id not in get_current_channel(auto_upload_config_path, auto_upload_conf_json_key):
             return
 
         if message.attachments:
