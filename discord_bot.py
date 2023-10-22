@@ -197,7 +197,8 @@ def discord_bot_main():
             if get_current_channel(auto_upload_config_path, auto_upload_conf_json_key) == []:
                 await ctx.response.send_message("auto upload is disabled", ephemeral=True)
             else:
-                await ctx.response.send_message(f"auto upload is enabled at {get_current_channel(auto_upload_config_path, auto_upload_conf_json_key)}", ephemeral=True)
+                channel_name_lists = [client.get_channel(channel_id).name for channel_id in get_current_channel(auto_upload_config_path, auto_upload_conf_json_key)]
+                await ctx.response.send_message(f"auto upload is enabled at {channel_name_lists}", ephemeral=True)
         elif command == "enable":
             if channel.id in get_current_channel(auto_upload_config_path, auto_upload_conf_json_key):
                 await ctx.response.send_message(f"Already enabled auto upload at {channel}", ephemeral=True)
