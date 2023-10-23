@@ -17,7 +17,7 @@ REPO = "https://github.com/Hikali-47041/discord-nas-upload-bot"
 workdir = Path("/tmp/discord-nas-upload")
 copy_suffix = "copy"
 
-auto_upload_config_path = Path("auto_upload_channels.json")
+auto_upload_config_path = Path("config/auto_upload_channels.json")
 auto_upload_conf_json_key = "auto-upload-channels"
 
 load_dotenv()
@@ -90,8 +90,8 @@ def download_file(url, file_name):
     return f"HTTP status code {requests_result.status_code}"
 
 def file_nas_upload(srcpath, distpath):
-    """ un a program that uploads files as a sub-process """
-    command = ["./venv/bin/python", "syno_nas_upload.py", srcpath, distpath]
+    """ run a program that uploads files as a sub-process """
+    command = ["python", "src/syno_nas_upload.py", srcpath, distpath]
     proc = subprocess.Popen(command)
     return proc.communicate()
 
