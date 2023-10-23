@@ -1,9 +1,8 @@
 '''
-Main Function
+Discord Nas Upload Bot
 '''
 
 import os
-import re
 import datetime
 import json
 import shutil
@@ -71,7 +70,9 @@ def write_current_channel(config_path, conf_json_key, channel_lists):
 def url_to_path(url, dirpath):
     """ Convert URL to file path """
     dirpath.mkdir(exist_ok=True, parents=True)
-    filepath = dirpath.joinpath(re.search("[^/]+$", url).group())
+    index_after_slash = url.rfind("/") + 1 if url.rfind("/") + 1 != len(url) else 0
+    index_question = url.find("?") if url.find("?") != -1 else len(url)
+    filepath = dirpath.joinpath(url[index_after_slash:index_question])
     # rename filename if exists
     if filepath.exists():
         filepath = dirpath.joinpath(f"{filepath.stem}_{copy_suffix}{filepath.suffix}")
