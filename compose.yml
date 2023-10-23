@@ -1,0 +1,13 @@
+version: '3'
+services:
+  python3:
+    restart: always
+    build: .
+    container_name: 'python3'
+    working_dir: '/root/projects'
+    tty: true
+    volumes:
+      - type: "bind"
+        source: "./"
+        target: "/root/projects"
+    command: python src/discord_bot.py
