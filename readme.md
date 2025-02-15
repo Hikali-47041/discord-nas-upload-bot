@@ -1,5 +1,5 @@
 # discord-nas-upload-bot
-Discordのチャンネルに投稿されたAttachmentsをNASにアップロードするボット(開発中)
+Discordのチャンネルに投稿されたAttachmentsをNASにアップロードするボット(開発終了)
 
 ## install(Using Docker)
 1. clone this repository && cd to repository directory
